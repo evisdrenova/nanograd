@@ -10,15 +10,17 @@ pub struct Tensor {
 }
 
 impl Tensor {
-    pub fn new(&self) -> Self {
-        //TODO: create a new Tensor with grad and initialize it to 0
+    pub fn new(data: f64) -> Self {
+        Tensor {
+            inner: Arc::new(Mutex::new(TensorData { data, grad: 0.0 })),
+        }
     }
 
     pub fn data(&self) -> f64 {
-        // TODO: return the data
+        self.inner.lock().unwrap().data
     }
 
     pub fn grad(&self) -> f64 {
-        //TODO: return the grad
+        self.inner.lock().unwrap().grad
     }
 }
