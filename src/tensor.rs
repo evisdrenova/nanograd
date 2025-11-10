@@ -65,21 +65,32 @@ impl Tensor {
     }
 
     pub fn mul(&self, other: &Tensor) -> Tensor {
-        // compute forward pass data operation
         let data = self.data() * other.data();
 
-        // create clones of the data that we can hand off to our backward_fn
         let self_clone = self.clone();
         let other_clone = other.clone();
 
-        // define the backward func and box it on the heap to run later
         let backward_fn = Box::new(move |grad_output: f64| {
-            // use += to accumulate bc we might run this multiple times
             self_clone.inner.lock().unwrap().grad += grad_output * other_clone.data();
             other_clone.inner.lock().unwrap().grad += grad_output * self_clone.data();
         });
 
         let prev = vec![self.clone(), other.clone()];
+
+        Tensor::from_op(data, prev, backward_fn)
+    }
+
+    pub fn pow(&self, n: f64) -> Tensor {
+        let data = self.data().powf(n);
+
+        let self_clone = self.clone();
+
+        let backward_fn = Box::new(move |grad_output: f64| {
+            self_clone.inner.lock().unwrap().grad +=
+                grad_output * n * self_clone.data().powf(n - 1.0);
+        });
+
+        let prev = vec![self.clone()];
 
         Tensor::from_op(data, prev, backward_fn)
     }
