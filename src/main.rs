@@ -1,7 +1,10 @@
 use nanograd::tensor::Tensor;
 
 fn main() {
-    let t = Tensor::new(5.0);
-    println!("data: {}", t.data());
-    println!("grad: {}", t.grad());
+    let a = Tensor::new(2.0);
+    let b = Tensor::new(3.0);
+    let c = a.add(&b);
+    let d = a.data() + b.data();
+    println!("data: {}", c.data());
+    println!("data: {}", d);
 }
