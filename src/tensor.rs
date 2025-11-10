@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::HashSet,
+    sync::{Arc, Mutex},
+};
 
 type BackwardFn = Box<dyn Fn(f64) + Send>;
 
@@ -93,6 +96,11 @@ impl Tensor {
         let prev = vec![self.clone()];
 
         Tensor::from_op(data, prev, backward_fn)
+    }
+
+    fn build_reverse_top_order(&self) -> Vec<Tensor> {
+        let mut topo = Vec::new();
+        let mut visited = HashSet::new();
     }
 }
 
