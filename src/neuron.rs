@@ -36,9 +36,44 @@ impl Neuron {
     }
 
     pub fn parameters(&self) -> Vec<Tensor> {
-        // Return all parameters (weights + bias) for training
+        // return all parameters (weights + bias) for training
         let mut params = self.weights.clone();
         params.push(self.bias.clone());
         params
+    }
+}
+
+pub struct Layer {
+    neurons: Vec<Neuron>,
+}
+
+impl Layer {
+    pub fn new(num_inputs: usize, num_outputs: usize) -> Self {
+        let neurons = (0..num_outputs).map(|_| Neuron::new(num_inputs)).collect();
+
+        Layer { neurons }
+    }
+
+    pub fn forward(&self, inputs: &[Tensor]) -> Vec<Tensor> {
+        self.neurons
+            .iter()
+            .map(|neuron| neuron.forward(inputs))
+            .collect()
+    }
+
+    pub fn parameters(&self) -> Vec<Tensor> {
+        self.neurons
+            .iter()
+            .flat_map(|neuron| neuron.parameters())
+            .collect()
+    }
+}
+
+impl Clone for Neuron {
+    fn clone(&self) -> Neuron {
+        Neuron {
+            weights: self.weights.clone(),
+            bias: self.bias.clone(),
+        }
     }
 }
