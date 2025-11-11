@@ -99,8 +99,34 @@ impl Tensor {
     }
 
     fn build_reverse_top_order(&self) -> Vec<Tensor> {
+        // the vec that we return
         let mut topo = Vec::new();
+        // stores the nodes that we have already visited
         let mut visited = HashSet::new();
+
+        fn build_reverse_top_order_recursive(
+            tensor: &Tensor,
+            topo: &mut Vec<Tensor>,
+            visited: &mut HashSet<*const ()>,
+        ) {
+            // create a unique pointer for this tensor
+            let ptr = Arc::as_ptr(&tensor.inner) as *const ();
+
+            if visited.contains(&ptr) {
+                return;
+            }
+
+            visited.insert(ptr);
+
+            let prev_unwrapped = tensor.inner.lock().unwrap().prev.clone();
+
+            for parent in prev_unwrapped.iter() {
+                build_reverse_top_order_recursive(parent, topo, visited);
+            }
+            topo.push(tensor.clone());
+        }
+        build_reverse_top_order_recursive(self, &mut topo, &mut visited);
+        topo
     }
 }
 
