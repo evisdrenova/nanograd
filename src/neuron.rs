@@ -1,9 +1,6 @@
-use std::ops::Add;
-
 use rand::Rng;
 
 use crate::tensor::Tensor;
-
 pub struct Neuron {
     weights: Vec<Tensor>,
     bias: Tensor,
@@ -43,6 +40,7 @@ impl Neuron {
     }
 }
 
+#[derive(Clone)]
 pub struct Layer {
     neurons: Vec<Neuron>,
 }
@@ -75,5 +73,41 @@ impl Clone for Neuron {
             weights: self.weights.clone(),
             bias: self.bias.clone(),
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct MLP {
+    layers: Vec<Layer>,
+}
+
+impl MLP {
+    pub fn new(num_inputs: usize, layer_sizes: &[usize]) -> Self {
+        let mut layers = Vec::new();
+        let mut input_size = num_inputs;
+
+        for &output_size in layer_sizes {
+            layers.push(Layer::new(input_size, output_size));
+            input_size = output_size; // Output of this layer = input to next
+        }
+
+        MLP { layers }
+    }
+
+    pub fn forward(&self, inputs: &[Tensor]) -> Vec<Tensor> {
+        let mut current = inputs.to_vec();
+
+        for layer in &self.layers {
+            current = layer.forward(&current);
+        }
+
+        current
+    }
+
+    pub fn parameters(&self) -> Vec<Tensor> {
+        self.layers
+            .iter()
+            .flat_map(|layer| layer.parameters())
+            .collect()
     }
 }
