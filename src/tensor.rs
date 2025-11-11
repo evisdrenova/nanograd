@@ -146,6 +146,25 @@ impl Tensor {
             }
         }
     }
+
+    pub fn relu(&self) -> Tensor {
+        // forward pass
+        let data = if self.data() > 0.0 { self.data() } else { 0.0 };
+
+        let self_clone = self.clone();
+
+        let backward_fn = Box::new(move |grad_output: f64| {
+            let local_grad = if self_clone.data() > 0.0 {
+                grad_output
+            } else {
+                0.0
+            };
+
+            self_clone.inner.lock().unwrap().grad += grad_output * local_grad;
+        });
+
+        Tensor::from_op(data, vec![self.clone()], backward_fn)
+    }
 }
 
 impl Clone for Tensor {

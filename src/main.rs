@@ -1,18 +1,17 @@
 use nanograd::tensor::Tensor;
 
 fn main() {
-    let a = Tensor::new(2.0);
-    let b = Tensor::new(3.0);
-    let c = a.mul(&b); // c = 6.0
-    let d = c.add(&a); // d = 8.0
-    let e = d.pow(2.0); // e = 64.0
+    let a = Tensor::new(3.0);
+    let b = a.relu();
+    b.backward();
 
-    e.backward();
+    assert_eq!(b.data(), 3.0); // 3.0 stays 3.0
+    assert_eq!(a.grad(), 1.0); // Gradient passes through
 
-    println!("e.data: {}", e.data());
-    println!("e.grad: {}", e.grad());
-    println!("d.grad: {}", d.grad());
-    println!("c.grad: {}", c.grad());
-    println!("a.grad: {}", a.grad());
-    println!("b.grad: {}", b.grad());
+    let a = Tensor::new(-3.0);
+    let b = a.relu();
+    b.backward();
+
+    assert_eq!(b.data(), 0.0); // -3.0 becomes 0.0
+    assert_eq!(a.grad(), 0.0); // Gradient blocked
 }
