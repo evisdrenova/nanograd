@@ -128,6 +128,24 @@ impl Tensor {
         build_reverse_top_order_recursive(self, &mut topo, &mut visited);
         topo
     }
+
+    pub fn backward(&self) {
+        let topo = self.build_reverse_top_order();
+
+        self.inner.lock().unwrap().grad = 1.0;
+
+        for tensor in topo.iter().rev() {
+            let grad = tensor.grad();
+
+            let should_call = tensor.inner.lock().unwrap().backward_fn.is_some();
+
+            if should_call {
+                if let Some(ref func) = tensor.inner.lock().unwrap().backward_fn {
+                    func(grad);
+                }
+            }
+        }
+    }
 }
 
 impl Clone for Tensor {
