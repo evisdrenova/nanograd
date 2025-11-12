@@ -148,22 +148,32 @@ impl Tensor {
     }
 
     pub fn relu(&self) -> Tensor {
-        // forward pass
         let data = if self.data() > 0.0 { self.data() } else { 0.0 };
 
         let self_clone = self.clone();
 
         let backward_fn = Box::new(move |grad_output: f64| {
-            let local_grad = if self_clone.data() > 0.0 {
-                grad_output
-            } else {
-                0.0
-            };
+            let local_grad = if self_clone.data() > 0.0 { 1.0 } else { 0.0 };
 
             self_clone.inner.lock().unwrap().grad += grad_output * local_grad;
         });
 
         Tensor::from_op(data, vec![self.clone()], backward_fn)
+    }
+
+    pub fn zero_grad(&self) {
+        self.inner.lock().unwrap().grad = 0.0;
+    }
+
+    pub fn update(&self, learning_rate: f64) {
+        let mut locked = self.inner.lock().unwrap();
+        locked.data -= learning_rate * locked.grad;
+    }
+
+    pub fn sub(&self, other: &Tensor) -> Tensor {
+        // a - b = a + (-1 × b)
+        let neg_one = Tensor::new(-1.0);
+        self.add(&other.mul(&neg_one))
     }
 }
 

@@ -4,21 +4,24 @@ use crate::tensor::Tensor;
 pub struct Neuron {
     weights: Vec<Tensor>,
     bias: Tensor,
+    is_output: bool,
 }
 
 impl Neuron {
-    pub fn new(num_inputs: usize) -> Self {
+    pub fn new(num_inputs: usize, is_output: bool) -> Self {
         let mut rng = rand::rng();
 
-        // Initialize weights randomly between -1 and 1
         let weights = (0..num_inputs)
             .map(|_| Tensor::new(rng.random_range(-1.0..1.0)))
             .collect();
 
-        // Initialize bias to 0
         let bias = Tensor::new(0.0);
 
-        Neuron { weights, bias }
+        Neuron {
+            weights,
+            bias,
+            is_output,
+        }
     }
 
     pub fn forward(&self, inputs: &[Tensor]) -> Tensor {
@@ -29,7 +32,13 @@ impl Neuron {
         }
 
         sum = sum.add(&self.bias);
-        sum.relu()
+
+        // Only apply ReLU if NOT output neuron
+        if self.is_output {
+            sum // Linear output
+        } else {
+            sum.relu() // Hidden layers use ReLU
+        }
     }
 
     pub fn parameters(&self) -> Vec<Tensor> {
@@ -43,13 +52,16 @@ impl Neuron {
 #[derive(Clone)]
 pub struct Layer {
     neurons: Vec<Neuron>,
+    is_output: bool,
 }
 
 impl Layer {
-    pub fn new(num_inputs: usize, num_outputs: usize) -> Self {
-        let neurons = (0..num_outputs).map(|_| Neuron::new(num_inputs)).collect();
+    pub fn new(num_inputs: usize, num_outputs: usize, is_output: bool) -> Self {
+        let neurons = (0..num_outputs)
+            .map(|_| Neuron::new(num_inputs, is_output))
+            .collect();
 
-        Layer { neurons }
+        Layer { neurons, is_output }
     }
 
     pub fn forward(&self, inputs: &[Tensor]) -> Vec<Tensor> {
@@ -72,6 +84,7 @@ impl Clone for Neuron {
         Neuron {
             weights: self.weights.clone(),
             bias: self.bias.clone(),
+            is_output: self.is_output.clone(),
         }
     }
 }
@@ -86,9 +99,10 @@ impl MLP {
         let mut layers = Vec::new();
         let mut input_size = num_inputs;
 
-        for &output_size in layer_sizes {
-            layers.push(Layer::new(input_size, output_size));
-            input_size = output_size; // Output of this layer = input to next
+        for (i, &output_size) in layer_sizes.iter().enumerate() {
+            let is_last_layer = i == layer_sizes.len() - 1;
+            layers.push(Layer::new(input_size, output_size, is_last_layer));
+            input_size = output_size;
         }
 
         MLP { layers }
