@@ -49,10 +49,19 @@ impl Neuron {
     }
 }
 
+impl Clone for Neuron {
+    fn clone(&self) -> Neuron {
+        Neuron {
+            weights: self.weights.clone(),
+            bias: self.bias.clone(),
+            is_output: self.is_output.clone(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Layer {
     neurons: Vec<Neuron>,
-    is_output: bool,
 }
 
 impl Layer {
@@ -61,7 +70,7 @@ impl Layer {
             .map(|_| Neuron::new(num_inputs, is_output))
             .collect();
 
-        Layer { neurons, is_output }
+        Layer { neurons }
     }
 
     pub fn forward(&self, inputs: &[Tensor]) -> Vec<Tensor> {
@@ -76,16 +85,6 @@ impl Layer {
             .iter()
             .flat_map(|neuron| neuron.parameters())
             .collect()
-    }
-}
-
-impl Clone for Neuron {
-    fn clone(&self) -> Neuron {
-        Neuron {
-            weights: self.weights.clone(),
-            bias: self.bias.clone(),
-            is_output: self.is_output.clone(),
-        }
     }
 }
 
